@@ -3,7 +3,12 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const app = express();
-const PORT = 3000;
+require('dotenv').config();
+
+const PORT = process.env.PORT;
+const url = process.env.url;
+const collectionName =process.env.collectionName;
+
 
 const bodyparser = require('body-parser');
 
@@ -15,8 +20,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Enable CORS
 app.use(cors());
 
-// MongoDB Connection
-const url = 'mongodb+srv://<Aipurifier>:<test1234>@cluster1.ftq5mjv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1'; // Replace with your MongoDB connection string
+
+
 
 mongoose.connect(url, {
     useNewUrlParser: true,
@@ -35,7 +40,7 @@ const sensorDataSchema = new mongoose.Schema({
     timestamp: { type: Date, default: Date.now }
 });
 
-const SensorData = mongoose.model('SensorData', sensorDataSchema);
+const SensorData = mongoose.model(collectionName, sensorDataSchema);
 
 app.get('/', function(req, res) {
     // This route will be served from the static directory
@@ -62,7 +67,7 @@ app.get('/last7days', async (req, res) => {
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-        const data = await db.collection('sensordatas')
+        const data = await db.collection(collectionName)
             .aggregate([
                 {
                     $match: {
