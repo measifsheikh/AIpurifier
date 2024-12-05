@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI purifier
+    </title>
+    <link rel="stylesheet" href="\home.css"> <!-- Link to the external CSS -->
+</head>
+<body>
+    <div class="dashboard">
+        <h2>AI purifier</h2>
+        
+        <!-- Metrics (PM2.5, AQI, Dust Density with Gauge Charts) -->
+        <div class="metrics">
+            <div class="metric">
+                <h3>PM2.5</h3>
+                <canvas id="pm25Gauge"></canvas>
+                <p id="pm25Value">Loading...</p>
+            </div>
+            <div class="metric">
+                <h3>AQI</h3>
+                <canvas id="aqiGauge"></canvas>
+                <p id="aqiValue">Loading...</p>
+            </div>
+            <div class="metric">
+                <h3>Dust Density</h3>
+                <canvas id="dustDensityGauge"></canvas>
+                <p id="dustDensityValue">Loading...</p>
+            </div>
+        </div>
+        
+        <!-- Line chart for historical data -->
+        <div class="chart-container">
+            <canvas id="dataChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="barChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+   
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="fetch.js"></script> <!-- Link to the external JavaScript file -->
+</body>
+</html>

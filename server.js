@@ -1,9 +1,16 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-
+const path = require('path');
 const app = express();
 const PORT = 3000;
+
+const bodyparser = require('body-parser');
+
+app.use(bodyparser.urlencoded({extended: false}));
+app.use(bodyparser.json())
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Enable CORS
 app.use(cors());
@@ -29,6 +36,11 @@ const sensorDataSchema = new mongoose.Schema({
 });
 
 const SensorData = mongoose.model('SensorData', sensorDataSchema);
+
+app.get('/', function(req, res) {
+    // This route will be served from the static directory
+    res.sendFile(path.join(__dirname, 'public', 'home.html'));
+  });
 
 // API Endpoint to Fetch the Latest Data
 app.get('/data', async (req, res) => {
