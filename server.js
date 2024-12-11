@@ -7,22 +7,19 @@ require('dotenv').config();
 
 const PORT = process.env.PORT;
 const url = process.env.url;
-const collectionName =process.env.collectionName;
-
+const collectionName = process.env.collectionName;
 
 const bodyparser = require('body-parser');
 
-app.use(bodyparser.urlencoded({extended: false}));
-app.use(bodyparser.json())
+app.use(bodyparser.urlencoded({ extended: false }));
+app.use(bodyparser.json());
 
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Enable CORS
 app.use(cors());
 
-
-
-
+// Connect to MongoDB
 mongoose.connect(url, {
     useNewUrlParser: true,
     useUnifiedTopology: true
@@ -42,10 +39,10 @@ const sensorDataSchema = new mongoose.Schema({
 
 const SensorData = mongoose.model(collectionName, sensorDataSchema);
 
-app.get('/', function(req, res) {
-    // This route will be served from the static directory
+app.get('/', function (req, res) {
+    // Serve the home page
     res.sendFile(path.join(__dirname, 'public', 'home.html'));
-  });
+});
 
 // API Endpoint to Fetch the Latest Data
 app.get('/data', async (req, res) => {
@@ -61,30 +58,54 @@ app.get('/data', async (req, res) => {
     }
 });
 
+// Endpoint to Accept Data from ESP32
+app.post('/submit-data', async (req, res) => {
+    try {
+        const { pm25, aqi, dust_density } = req.body;
 
+        // Validate the data
+        if (pm25 == null || aqi == null || dust_density == null) {
+            return res.status(400).json({ message: 'Invalid data format' });
+        }
+
+        // Save the data to MongoDB
+        const newSensorData = new SensorData({
+            pm25,
+            aqi,
+            dust_density
+        });
+
+        await newSensorData.save();
+
+        res.json({ message: 'Data received and stored successfully' });
+    } catch (err) {
+        console.error('Error saving data:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// API Endpoint to Fetch the Last 7 Days of Data
 app.get('/last7days', async (req, res) => {
     try {
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-        const data = await db.collection(collectionName)
-            .aggregate([
-                {
-                    $match: {
-                        timestamp: { $gte: sevenDaysAgo }
-                    }
-                },
-                {
-                    $group: {
-                        _id: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } },
-                        avgPm25: { $avg: "$pm25" },
-                        avgAqi: { $avg: "$aqi" },
-                        avgDustDensity: { $avg: "$dust_density" }
-                    }
-                },
-                { $sort: { _id: 1 } }
-            ])
-            .toArray();
+        const data = await SensorData.aggregate([
+            {
+                $match: {
+                    timestamp: { $gte: sevenDaysAgo }
+                }
+            },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } },
+                    avgPm25: { $avg: "$pm25" },
+                    avgAqi: { $avg: "$aqi" },
+                    avgDustDensity: { $avg: "$dust_density" }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
 
         const response = Array.from({ length: 7 }, (_, i) => {
             const date = new Date();
@@ -105,7 +126,6 @@ app.get('/last7days', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
 
 // Start the server
 app.listen(PORT, () => {
